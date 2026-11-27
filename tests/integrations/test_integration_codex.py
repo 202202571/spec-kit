@@ -3,6 +3,7 @@
 import shutil
 import subprocess
 import tomllib
+from pathlib import Path
 
 import pytest
 
@@ -206,7 +207,61 @@ class TestCodexHookCommandNote:
         )
 
 
-_COMMAND_STEP = (CommandStep, {"command": "speckit.plan", "input": {"args": "body"}})
+class TestCodexHookInvocationPrefix:
+    """Hook invocation lines must use Codex's ``$`` prefix (#4954)."""
+
+    @staticmethod
+    def _assert_dollar_hook_lines(content):
+        assert "`/{command}`" not in content
+        assert "Command: `${command}`" in content
+        assert "To execute: `${command}`" in content
+        assert "Executing: `${command}`" in content
+        # The dotted hook id is data, not an invocation.
+        assert "EXECUTE_COMMAND: {command}" in content
+
+    def test_core_skill_hook_lines_use_dollar_prefix(self, tmp_path):
+        integration = get_integration("codex")
+        manifest = IntegrationManifest("codex", tmp_path)
+        integration.setup(tmp_path, manifest, script_type="sh")
+
+        skill = tmp_path / ".agents/skills/speckit-specify/SKILL.md"
+        self._assert_dollar_hook_lines(skill.read_text(encoding="utf-8"))
+
+    def test_bundled_extension_skill_hook_lines_use_dollar_prefix(self, tmp_path):
+        from specify_cli import save_init_options
+        from specify_cli.extensions import ExtensionManager
+
+        (tmp_path / ".specify").mkdir()
+        save_init_options(tmp_path, {"ai": "codex", "ai_skills": True, "script": "sh"})
+        bug_extension = Path(__file__).resolve().parents[2] / "extensions" / "bug"
+        ExtensionManager(tmp_path).install_from_directory(bug_extension, "999.0.0")
+
+        skill = tmp_path / ".agents/skills/speckit-bug-fix/SKILL.md"
+        self._assert_dollar_hook_lines(skill.read_text(encoding="utf-8"))
+
+    def test_other_slashes_are_left_alone(self):
+        content = (
+            "See https://example.com/docs and `https://example.com/{command}`.\n"
+            "Write to /tmp/x or `/tmp/x`.\n"
+            "Paths like `/{command}/sub` and bare /{command} are not hook lines.\n"
+        )
+        result = get_integration("codex").post_process_skill_content(content)
+        assert result == content
+
+    def test_slash_agent_hook_lines_are_unchanged(self, tmp_path):
+        integration = get_integration("claude")
+        manifest = IntegrationManifest("claude", tmp_path)
+        integration.setup(tmp_path, manifest, script_type="sh")
+
+        content = (tmp_path / ".claude/skills/speckit-specify/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        assert "To execute: `/{command}`" in content
+        assert "Executing: `/{command}`" in content
+        assert "`${command}`" not in content
+
+
+_COMMAND_STEP = (CommandStep,{"command": "speckit.plan", "input": {"args": "body"}})
 _PROMPT_STEP = (PromptStep, {"type": "prompt", "prompt": "Summarise"})
 # Captured agent output that passes the host's value pattern, so only Codex's
 # own rule rejects it.
