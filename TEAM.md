@@ -32,7 +32,7 @@ Codex는 `$speckit-...`로 명령을 실행하는데, 생성된 `.agents/skills/
 - **11-17, #4958 (mnriem):** `/{command}` 방식은 유지할 의도가 아니었다. 재작성 장치를 더하지 말고, 기존 명령 참조 방식을 중심으로 필요한 first-party 템플릿을 고쳐 달라고 했다.
 - **원래 설계:** `CodexIntegration.post_process_skill_content`에서 `` `/{command}` ``만 `` `${command}` ``로 치환한다. 11-17 댓글 기준으로는 거절될 수 있다.
 - **제약:** `{command}`는 실행 중에 `.specify/extensions.yml`에서 채워지므로 설치 시점의 토큰으로 표현할 수 없다.
-- **다음 할 일:** #4954에 방향 확인 댓글을 올린다(아직 게시 전). **답을 받기 전에는 PR을 보내지 않는다.**
+- **11-27, 우리 댓글:** #4954에 방향 확인 질문을 올렸다. 답변 대기 중. **답을 받기 전에는 팀 PR을 병합하지 않고 업스트림 PR도 보내지 않는다.**
 
 | 관련 항목 | 상태 |
 |---|---|
@@ -44,7 +44,7 @@ Codex는 `$speckit-...`로 명령을 실행하는데, 생성된 `.agents/skills/
 - 회귀 테스트 4개 작성(`tests/integrations/test_integration_codex.py`, 아직 커밋 전). 원래 설계를 전제로 하므로 방향이 바뀌면 수정해야 한다.
   - 수정 전 코드: 버그를 잡는 2개 실패, 동작 유지 확인 2개 통과
 - 수정 전 수동 재현 성공
-- 소스 코드는 수정 전
+- 원래 설계대로 구현함: `fix/4954-codex-override` → fork PR #2 (open, 병합 보류). 테스트 초안을 포함한 로컬 실행에서 Codex 테스트 71개 통과, 수정 후 수동 재현 성공
 - 수정 전 `tests/integrations`(Windows): 31 failed, 3471 passed, 77 skipped. `WinError 1314`(권한 없음) 오류가 29건 확인됨. 나머지 원인은 미확인
 
 ## 4. 개발 환경 (Windows PowerShell)
@@ -96,7 +96,25 @@ git fetch origin
 git show origin/docs/4954-team-notes:TEAM.md
 ```
 
+### 병합 규칙 (fork 안의 팀 PR)
+**아래를 모두 만족해야 병합한다.**
+- [ ] 메인테이너의 방향 답변을 확인했고, PR 내용이 그 방향과 맞는다. **답변 전에는 병합하지 않는다.**
+- [ ] 작성자가 아닌 팀원이 검토하고 승인했다.
+- [ ] 실행한 테스트와 결과가 PR 본문에 있고, 기준선에 없던 새 실패가 없다. (수정 전 코드에서의 테스트 실패 확인은 예외)
+- [ ] base가 `202202571/spec-kit`의 `fix/4954-codex-hook-prefix`다.
+
+| PR | 승인 | 병합 |
+|---|---|---|
+| 종훈의 PR | 상균 | 상균 |
+| 형섭의 PR | 상균 | 종훈 |
+| 상균의 PR | 파일 담당자 | 파일 담당자 |
+
+- 병합 방식은 **Rebase and merge**를 쓴다(저장소 설정에서 허용된 경우). 병합 커밋이 생기지 않고 커밋 메시지의 trailer가 유지된다.
+- 순서는 **구현 PR → 테스트 PR**. 테스트 PR은 병합 전에 최신 공통 브랜치를 반영해 통과를 확인한다.
+- 병합 후 각자 공통 브랜치를 `git pull`로 갱신하고, 두 PR을 모두 병합하면 테스트를 다시 실행한다.
+
 ## 6. 커밋과 PR 규칙
+- 커밋 trailer는 한 줄 명령으로 넣고 `git log -1 --format=%B`로 확인한다(여러 줄 붙여넣기에서 빠진 적이 있음). 예: `git commit -m "제목" --trailer "Assisted-by: ..."`
 - 커밋 메시지는 영어, Conventional Commits. 예: `fix(codex): use $ prefix in hook invocation lines`
 - AI 에이전트를 쓴 커밋에는 `Assisted-by: <에이전트> (model: <모델>, supervised|autonomous)`를 넣는다. `supervised`는 사람이 커밋 전에 작성했거나 줄 단위로 검토한 경우만 해당한다. 도구가 붙인 `Co-Authored-By:`는 지우지 않는다.
 - 공동 작업자는 `Co-authored-by: 이름 <GitHub noreply 이메일>`로 남긴다. squash할 때 빠지지 않게 확인한다.
@@ -116,7 +134,7 @@ git show origin/docs/4954-team-notes:TEAM.md
 **종훈**
 - #4954에 방향 확인 댓글을 올리고 메인테이너의 답을 팀에 공유한다.
 - 정해진 방향대로 구현한다. 방향이 바뀌면 이 문서부터 고친다.
-- 팀 PR을 공통 브랜치에 합치고, 업스트림 PR을 만들고 메인테이너에게 답한다.
+- 병합 규칙에 따라 형섭의 PR을 합치고, 업스트림 PR을 만들고 메인테이너에게 답한다.
 
 **형섭**
 - 작성되어 있는 테스트 초안 4개를 넘겨받아 이해하고 보완한다(AI 도구로 작성한 초안이므로 직접 검토한다).
