@@ -539,7 +539,7 @@ if (-not $DryRun) {
             try { $currentBranch = (git rev-parse --abbrev-ref HEAD 2>$null).Trim() } catch {}
             $existingBranch = git branch --list $branchName 2>$null
             if ($existingBranch) {
-                if ($AllowExistingBranch) {
+                if ($AllowExistingBranch -or ($env:GIT_BRANCH_NAME -and ($currentBranch -ceq $branchName))) {
                     if ($currentBranch -eq $branchName) {
                         # Already on the target branch
                     } else {

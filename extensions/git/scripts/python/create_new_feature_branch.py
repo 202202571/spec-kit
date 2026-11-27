@@ -633,7 +633,7 @@ def main(argv: list[str]) -> int:
                     _git_lines(repo_root, "branch", "--list", branch_name)
                 )
                 if branch_exists:
-                    if args.allow_existing:
+                    if args.allow_existing or (env_branch_name and current_branch == branch_name):
                         if current_branch != branch_name:
                             switch = subprocess.run(
                                 ["git", "checkout", "-q", branch_name],
