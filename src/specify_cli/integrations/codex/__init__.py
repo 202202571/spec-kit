@@ -55,6 +55,16 @@ class CodexIntegration(SkillsIntegration):
     events_config_file = ".codex/config.toml"
     events_format = "toml"
 
+    def post_process_skill_content(self, content: str) -> str:
+        """Use Codex's ``$`` prefix in hook invocation lines.
+
+        ``{command}`` is filled in at run time from ``extensions.yml``, so a
+        ``__SPECKIT_COMMAND_<NAME>__`` token cannot name it at install time.
+        Only the exact backtick-wrapped literal is replaced.
+        """
+        content = super().post_process_skill_content(content)
+        return content.replace("`/{command}`", "`${command}`")
+
     def build_exec_args(
         self,
         prompt: str,
