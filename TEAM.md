@@ -46,6 +46,7 @@ Codex는 `$speckit-...`로 명령을 실행하는데, 생성된 `.agents/skills/
 - 수정 전 수동 재현 성공
 - 원래 설계대로 구현함: `fix/4954-codex-override` → fork PR #2 (open, 병합 보류). 테스트 초안을 포함한 로컬 실행에서 Codex 테스트 71개 통과, 수정 후 수동 재현 성공
 - 수정 전 `tests/integrations`(Windows): 31 failed, 3471 passed, 77 skipped. `WinError 1314`(권한 없음) 오류가 29건 확인됨. 나머지 원인은 미확인
+- 수정 후(테스트 초안 4개 포함): 31 failed, 3475 passed, 77 skipped. 실패 테스트 이름이 수정 전과 동일하며 새 실패 없음
 
 ## 4. 개발 환경 (Windows PowerShell)
 ```powershell
